@@ -37,6 +37,9 @@ class Model(models.Model):
     modelname = models.CharField(db_column='Modelname', unique=True, max_length=200)  # Field name made lowercase.
     modelcat = models.ForeignKey(Cat, models.DO_NOTHING, db_column='ModelCat')  # Field name made lowercase.
 
+    def __str__(self):
+        return self.modelname
+
     class Meta:
         db_table = 'Model'
 
