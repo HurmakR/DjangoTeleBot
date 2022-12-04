@@ -24,6 +24,7 @@ class BotDB:
         else:
             fullname = name
         self.cursor.execute(f'INSERT INTO Log (name, telegram_id, data, date) VALUES (?, ? ,? ,?)', [fullname, nick, data, time])
+        print('successfully added: db.py 27')
         self.conn.commit()
 
     def close(self):
