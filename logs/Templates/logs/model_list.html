@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <h1> Main page </h1>
+</head>
+<body>
+
+<h2>Model list:</h2>
+<ul>
+  {% for model in object_list%}
+    <li>{{model}}</li>
+  {% endfor %}
+
+</ul>
+</body>
+</html>
