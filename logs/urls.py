@@ -1,9 +1,9 @@
 from django.urls import path
 
 from . import views
-from .views import ModelListView
+from .views import CatListView
 
 app_name = 'logs'
 urlpatterns = [
-    path('', ModelListView.as_view(), name='model_list'),
+    path('', CatListView.as_view(), name='cat_list'),
 ]

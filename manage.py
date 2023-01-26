@@ -129,9 +129,6 @@ async def price_result(callback_query: types.CallbackQuery, state: FSMContext):
 
 @dp.message_handler(state=RepairStatus.waiting_for_repair_id)
 async def enter_repair_id(message : types.Message, state: FSMContext):
-    print(message.from_user.first_name, message.from_user.last_name, message.from_user.id,
-                  message.from_user.username,
-                  message.text, datetime.now())
     BotDB.add_log(message.from_user.first_name, message.from_user.last_name,
                   message.from_user.username,
                   message.text, datetime.now())

@@ -48,6 +48,7 @@ class Partprice(models.Model):
     idmodel = models.ForeignKey(Model, models.DO_NOTHING, db_column='idModel')  # Field name made lowercase.
     idpart = models.ForeignKey('Parts', models.DO_NOTHING, db_column='idPart')  # Field name made lowercase.
     pricepart = models.CharField(db_column='pricePart', max_length=200)  # Field name made lowercase.
+    pricestock = models.CharField(db_column="pricePartStock", max_length=200)
     description = models.CharField(blank=True, null=True, max_length=200)
     picture = models.TextField(blank=True, null=True)  # This field type is a guess.
 

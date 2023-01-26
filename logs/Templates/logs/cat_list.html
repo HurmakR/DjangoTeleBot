@@ -1,0 +1,9 @@
+{% extends 'logs/base.html' %} {% block title %}Home Page{% endblock %}
+{% block content %}
+{% for cats in object_list%}
+<div class="card mt-2">
+  <div class="card-header"><strong>{{ cats }}</strong></div>
+</div>
+{% endfor %}
+
+{% endblock %}
