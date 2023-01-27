@@ -15,7 +15,7 @@ class BotDB:
         return result
 
     def get_price(self, model):
-        result = self.cursor.execute(f"SELECT Parts.PartName, PartPrice.pricePart FROM PartPrice INNER JOIN Parts ON Parts.id = PartPrice.idPart INNER JOIN Model ON Model.id = PartPrice.idModel WHERE Model.Modelname = (?)", [model])
+        result = self.cursor.execute(f"SELECT Parts.PartName, PartPrice.pricePart, PartPrice.pricePartStock FROM PartPrice INNER JOIN Parts ON Parts.id = PartPrice.idPart INNER JOIN Model ON Model.id = PartPrice.idModel WHERE Model.Modelname = (?)", [model])
         return result
 
     def add_log(self, name, surname, nick, data, time):

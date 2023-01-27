@@ -114,15 +114,14 @@ async def price_model(callback_query: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(lambda call: True, state=PriceStatus.waiting_for_price)
 async def price_result(callback_query: types.CallbackQuery, state: FSMContext):
-    print(callback_query.from_user.first_name, callback_query.from_user.last_name, callback_query.from_user.username,
-                  callback_query.data, datetime.now())
     BotDB.add_log(callback_query.from_user.first_name, callback_query.from_user.last_name, callback_query.from_user.username,
                   callback_query.data, datetime.now())
     price_out = ''
     await callback_query.message.edit_reply_markup()
     await bot.send_message(callback_query.from_user.id, f'{callback_query.data}:')
     for i in BotDB.get_price(callback_query.data):
-        price_out += f'{i[0]}: {i[1]} грн. \n'
+        price_out += f'{i[0]}:\n' \
+                     f'Обмінна ціна {i[1] or "*"} | Сток ціна {i[2] or "*"} грн. \n'
     await bot.send_message(callback_query.from_user.id, price_out)
     await state.finish()
 
