@@ -1,3 +1,4 @@
+from asgiref.sync import sync_to_async
 from django.db import models
 
 
@@ -6,6 +7,7 @@ class Log(models.Model):
     telegram_id = models.CharField(blank=True, null=True, max_length=200)
     data = models.CharField(blank=True, null=True, max_length=200)
     date = models.DateTimeField(blank=True, null=True)
+
 
     def __str__(self):
         return f'{self.name} {self.telegram_id}  | {self.data} | {self.date}'
@@ -37,6 +39,7 @@ class Model(models.Model):
     modelname = models.CharField(db_column='Modelname', unique=True, max_length=200)  # Field name made lowercase.
     modelcat = models.ForeignKey(Cat, models.DO_NOTHING, db_column='ModelCat')  # Field name made lowercase.
 
+
     def __str__(self):
         return self.modelname
 
@@ -54,5 +57,6 @@ class Partprice(models.Model):
 
     def __str__(self):
         return f'{self.idmodel.modelname} {self.idpart}'
+
     class Meta:
         db_table = 'PartPrice'

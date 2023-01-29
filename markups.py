@@ -1,6 +1,12 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from db import BotDB
+from tutorial.wsgi import *
+from logs.models import Cat, Model, Partprice, Parts
+
+
 #---Back to main menu Button---
+
+
 btnMain = KeyboardButton('🔙 Повернутись в головне меню')
 
 #---Main  menu---
@@ -15,6 +21,8 @@ mainMenuExtended = ReplyKeyboardMarkup(resize_keyboard = True,row_width=2).add(b
 # Inline menu Category from the same sqlite db table
 BotDB = BotDB('price.db')
 buttons=[]
-for i in BotDB.get_category():
-    buttons.append([InlineKeyboardButton(i[0],callback_data=i[0])])
+
+for i in Cat.objects.all().order_by('category'):#BotDB.get_category():
+    buttons.append([InlineKeyboardButton(i.category,callback_data=i.category)])
 catMenu = InlineKeyboardMarkup(inline_keyboard =buttons)
+
