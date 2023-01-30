@@ -5,7 +5,7 @@ from .models import Log, Parts, Cat, Model, Partprice
 
 
 class PartpriceAdmin(admin.ModelAdmin):
-    search_fields = ['idmodel__modelname', 'idpart__partname',]
+    search_fields = ['idmodel__modelname', 'idpart__partname', ]
     ordering = ['idmodel__modelname']
 
 

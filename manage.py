@@ -12,14 +12,14 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from RemAPI import get_repair_by_id
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import markups as nav
-from db import BotDB
 from datetime import datetime
-from asgiref.sync import async_to_sync, sync_to_async
-from logs.models import Model, Partprice
-import asyncio
+from logs.models import Model, Partprice, Cat
 
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 
+"""Here comes bot's handlers section. 
+(it will be transferred to separate individual module later.)  
+"""
 storage = MemoryStorage()
 load_dotenv()
 bot = Bot(token=os.getenv('TELE_TOKEN'))
@@ -38,12 +38,12 @@ class PriceStatus(StatesGroup):
 
 @dp.message_handler(commands=['start', 'help'])
 async def cmd_start(message: types.Message):
-    print(message.from_user.id)
-    if message.from_user.id == 419685899 or 705036271:
+    """ Handler for starting command"""
+    if message.from_user.id == 419685899 or 705036271:  #hardcoded useres id to output special Bot menu items
         await bot.send_message(message.from_user.id, "Вітаємо, {0.first_name}!\nЦей бот допоможе Вам "
                                                      "отримати інформацію про стан ремонту, ціни на послуги та іншу корисну інформацію .".format(
             message.from_user), reply_markup=nav.mainMenuExtended)
-    else:
+    else: #regular menu for all other users
         await bot.send_message(message.from_user.id, "Вітаємо, {0.first_name}!\nЦей бот допоможе Вам "
                      "отримати інформацію про стан ремонту, ціни на послуги та іншу корисну інформацію .".format(
                          message.from_user), reply_markup=nav.mainMenu)
@@ -52,13 +52,18 @@ async def cmd_start(message: types.Message):
 @dp.message_handler()
 async def bot_message(message: types.Message):
     """ processing input from keyboard"""
-    if message.text == '⚙ Статус ремонту ⚙':
+    if message.text == '⚙ Статус ремонту ⚙':# starting stages from RepairStatus class
         await bot.send_message(message.from_user.id, 'Введіть номер квитанції (<i>тільки цифри <s>ВО</s><b>123456</b></i>)', parse_mode='html')
         await RepairStatus.waiting_for_repair_id.set()
-    elif message.text == '💸 Вартість ремонту 💸':
-        await bot.send_message(message.chat.id, '💻📱 Оберіть категорію: ⌚🖥', reply_markup=nav.catMenu)
+    elif message.text == '💸 Вартість ремонту 💸':# starting stages from PriceStatus class,
+        # forms inline keys filled from model Cat
+        buttons = []
+        for i in Cat.objects.all().order_by('category'):
+            buttons.append([InlineKeyboardButton(i.category, callback_data=i.category)])
+        catMenu = InlineKeyboardMarkup(inline_keyboard=buttons)
+        await bot.send_message(message.chat.id, '💻📱 Оберіть категорію: ⌚🖥', reply_markup=catMenu)
         await PriceStatus.waiting_for_model.set()
-    elif message.text == '📦 Реквізити для відправки Новою Поштою 📦':
+    elif message.text == '📦 Реквізити для відправки Новою Поштою 📦':#text message output
         await bot.send_message(message.chat.id, '<b>Реквізити для адресної відправки: </b>\n\n'
                                                 '<i>м. Львів, вул. К. Левицького 6, </i>\n'
                                                 '<i>0673233095,отримувач: Гурмак Роман Дмитрович.</i> \n'
@@ -77,7 +82,7 @@ async def bot_message(message: types.Message):
                                                 '❗️<b>Нанесене захисне скло чи плівка можуть бути демонтовані,'
                                                 ' їхня цілісність та повернення не гарантуються.</b> '
                                                 , parse_mode='html')
-    elif message.text == '📍 Контакти, графік роботи 📍':
+    elif message.text == '📍 Контакти, графік роботи 📍':#text message output
         await bot.send_message(message.chat.id, '<b>Наша адреса: </b>\n\n'
                                                 '<i>м. Львів, вул. К. Левицького 6, </i>\n'
                                                 '<i>0800-330-434, 067-323-30-95.</i> \n'
@@ -86,7 +91,7 @@ async def bot_message(message: types.Message):
                                                 '<i>Понеділок-пятницю з 10:00 до 19:00 </i>\n'
                                                 '<i>Субота з 11:00 до 16:00.</i> \n'
                                                 '<i>Неділя - вихідний </i>\n\n', parse_mode='html')
-    elif message.text == '💳 Реквізити для оплати 💳':
+    elif message.text == '💳 Реквізити для оплати 💳':#text message output
         await bot.send_message(message.chat.id, '<b>Одержувач платежу: </b>\n\n'
                                                 '<b>Найменування одержувача:   ФОП Гурмак Роман Дмитрович </b>\n'
                                                 '<b>Код одержувача:                            2899103773</b> \n'
@@ -98,16 +103,17 @@ async def bot_message(message: types.Message):
 
                                                 , parse_mode='html')
 
-    else:
+    else:#wrong text entered reply message
         await message.reply('Скористайтесь меню або введіть команду /start')
 
 
 @dp.callback_query_handler(lambda call: True, state=PriceStatus.waiting_for_model)
 async def price_model(callback_query: types.CallbackQuery, state: FSMContext):
+    """Handler shows devices models  filtered by chosen earlier model category  """
     await bot.answer_callback_query(callback_query.id)
     await callback_query.message.edit_reply_markup()
     buttons = []
-    async for models_filtered in Model.objects.filter(modelcat = callback_query.data).order_by('modelname'):
+    async for models_filtered in Model.objects.filter(modelcat=callback_query.data).order_by('modelname'):
         buttons.append([InlineKeyboardButton(str(models_filtered), callback_data=str(models_filtered))])
     modMenu = InlineKeyboardMarkup(row_width=3, inline_keyboard=buttons)
     await bot.send_message(callback_query.from_user.id, f'Оберіть модель {callback_query.data}:', reply_markup=modMenu)
@@ -116,6 +122,7 @@ async def price_model(callback_query: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(lambda call: True, state=PriceStatus.waiting_for_price)
 async def price_result(callback_query: types.CallbackQuery, state: FSMContext):
+    """Handler shows messages with prices for chosen device model  """
     #BotDB.add_log(callback_query.from_user.first_name, callback_query.from_user.last_name, callback_query.from_user.username,
                   #callback_query.data, datetime.now())
     await callback_query.message.edit_reply_markup()
@@ -130,9 +137,10 @@ async def price_result(callback_query: types.CallbackQuery, state: FSMContext):
 
 @dp.message_handler(state=RepairStatus.waiting_for_repair_id)
 async def enter_repair_id(message : types.Message, state: FSMContext):
-    BotDB.add_log(message.from_user.first_name, message.from_user.last_name,
-                  message.from_user.username,
-                  message.text, datetime.now())
+    """Handler searches for entered by the user repair id  """
+    #BotDB.add_log(message.from_user.first_name, message.from_user.last_name,
+    #              message.from_user.username,
+    #              message.text, datetime.now())
     try:
         global data
         async with state.proxy() as data:
@@ -143,9 +151,9 @@ async def enter_repair_id(message : types.Message, state: FSMContext):
         await bot.send_message(message.chat.id, '❌ Ремонту з таким номером не знайдено ❌\nВведіть коректний номер квитанції')
         await state.finish()
 
-
 @dp.message_handler(state=RepairStatus.waiting_for_phone_number)
 async def enter_phone_number(message : types.Message, state: FSMContext):
+    """Handler validates successfully found repair by entered last 4 digits from repair phone number  """
     phone_matched = False
     for phone in data['client']['phone']:
         if message.text == phone[-4::]:
@@ -157,8 +165,6 @@ async def enter_phone_number(message : types.Message, state: FSMContext):
     else:
         await bot.send_message(message.chat.id, '❌ Введені цифри не відповідають 4 останнім зареєстрованого номеру телефона ❌', parse_mode='html')
     await state.finish()
-
-BotDB = BotDB('price.db')
 
 def main():
     """Run administrative tasks."""
@@ -172,8 +178,6 @@ def main():
             "forget to activate a virtual environment?"
         ) from exc
     execute_from_command_line(sys.argv)
-
-
 
 if __name__ == '__main__':
 
