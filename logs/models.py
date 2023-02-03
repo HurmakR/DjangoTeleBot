@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.utils import timezone
 
 class Log(models.Model):
     name = models.CharField(blank=True, null=True, max_length=200)
@@ -9,6 +9,11 @@ class Log(models.Model):
 
     def __str__(self):
         return f'{self.name} {self.telegram_id}  | {self.data} | {self.date}'
+
+    @staticmethod
+    def addlog(name, telegram_id, data, date=timezone.now()):
+        log = Log(name=name, telegram_id=telegram_id, data=data, date=date)
+        log.save()
 
     class Meta:
         db_table = 'Log'

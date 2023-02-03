@@ -12,8 +12,8 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from RemAPI import get_repair_by_id
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import markups as nav
-from datetime import datetime
-from logs.models import Model, Partprice, Cat
+from django.utils import timezone
+from logs.models import Model, Partprice, Cat, Log
 
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 
@@ -115,7 +115,7 @@ async def price_model(callback_query: types.CallbackQuery, state: FSMContext):
     buttons = []
     async for models_filtered in Model.objects.filter(modelcat=callback_query.data).order_by('modelname'):
         buttons.append([InlineKeyboardButton(str(models_filtered), callback_data=str(models_filtered))])
-    modMenu = InlineKeyboardMarkup(row_width=3, inline_keyboard=buttons)
+    modMenu = InlineKeyboardMarkup( inline_keyboard=buttons)
     await bot.send_message(callback_query.from_user.id, f'Оберіть модель {callback_query.data}:', reply_markup=modMenu)
     await PriceStatus.waiting_for_price.set()
 
@@ -123,24 +123,24 @@ async def price_model(callback_query: types.CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(lambda call: True, state=PriceStatus.waiting_for_price)
 async def price_result(callback_query: types.CallbackQuery, state: FSMContext):
     """Handler shows messages with prices for chosen device model  """
-    #BotDB.add_log(callback_query.from_user.first_name, callback_query.from_user.last_name, callback_query.from_user.username,
-                  #callback_query.data, datetime.now())
+    Log.addlog(f'{callback_query.from_user.first_name} {callback_query.from_user.last_name}',
+               callback_query.from_user.username, callback_query.data)
     await callback_query.message.edit_reply_markup()
     await bot.send_message(callback_query.from_user.id, f'{callback_query.data}:')
     price_out = ''
+    print (price_out)
     async for mod in Partprice.objects.filter(idmodel__modelname=callback_query.data):
         price_out += f'{mod.idpart.partname}:\n' \
                      f'Обмінна ціна {mod.pricepart or "*"} | Сток ціна {mod.pricestock or "*"} грн. \n'
-    await bot.send_message(callback_query.from_user.id, price_out)
+    await bot.send_message(callback_query.from_user.id, price_out or "Потребує уточнення")
     await state.finish()
 
 
 @dp.message_handler(state=RepairStatus.waiting_for_repair_id)
 async def enter_repair_id(message : types.Message, state: FSMContext):
     """Handler searches for entered by the user repair id  """
-    #BotDB.add_log(message.from_user.first_name, message.from_user.last_name,
-    #              message.from_user.username,
-    #              message.text, datetime.now())
+    Log.addlog(f'{message.from_user.first_name} {message.from_user.last_name}',
+                 message.from_user.username, message.text)
     try:
         global data
         async with state.proxy() as data:
